@@ -7,7 +7,7 @@ using namespace cv;
 HWND hWnd = NULL;
 
 LONG g_lRealPlayHandle, g_lPort, g_lUserID;
-int g_width = 1280, g_height = 720;
+int g_width = 1920, g_height = 1080;
 
 volatile bool g_bBusy = false;
 char *g_pBuf = (char*)malloc(g_width*g_height * 3 / 2);

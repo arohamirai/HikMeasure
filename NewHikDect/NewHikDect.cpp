@@ -20,8 +20,10 @@ extern Mat g_color;
 
 int main()
 {
-	_beginthreadex(NULL, 0, &readCam, NULL, 0, NULL);
-	Sleep(5 * 1000);
+	//_beginthreadex(NULL, 0, &readCam, NULL, 0, NULL);
+	//Sleep(5 * 1000);
+	VideoCapture cap("person.mp4");
+	Mat lineImg = imread("line.bmp", 0);
 	// ----------------------------- 4. 在线检测 ---------------------------------------- //
 	//*
 	// 检测   
@@ -35,17 +37,24 @@ int main()
 	// 初始化
 	while (1)
 	{
-		bool ret = decodeImg(frame);
-		if (!ret) continue;
+		//bool ret = decodeImg(frame);
+		//if (!ret) continue;
+		cap >> frame;
 		libvibeModel_Sequential_AllocInit_8u_C3R(model, frame.data, frame.cols, frame.rows);
 		break;
 	}
+
+	int skip = 1000;
+	while (--skip > 0) cap >> frame;
+
 	// 检测
 	VideoWriter writer("FindPersonNoFilt.avi", CV_FOURCC('M', 'J', 'P', 'G'), 15, Size(g_width, g_height), true);
 	while (waitKey(1) != 27) //ESC
 	{
-		bool ret = decodeImg(frame);
-		if (!ret) continue;
+		//bool ret = decodeImg(frame);
+		//if (!ret) continue;
+		cap >> frame;
+		if (frame.empty()) break;
 		libvibeModel_Sequential_Segmentation_8u_C3R(model, frame.data, segmentationMap.data);
 		libvibeModel_Sequential_Update_8u_C3R(model, frame.data, segmentationMap.data);
 
@@ -76,16 +85,24 @@ int main()
 			//line(frame, cv::Point(rect.x, rect.y + rect.height), cv::Point(rect.x + rect.width, rect.y + rect.height), CV_RGB(0, 0, 0), 5);
 
 			cv::Point pt;// 靠近地面的边的中点
-			pt.x = rect.x + rect.width / 2;
-			pt.y = rect.y + rect.height;
+			pt.x = (rect.x + rect.width / 2) < g_width ? (rect.x + rect.width / 2):(g_width-1);
+			pt.y = (rect.y + rect.height) < g_height ? (rect.y + rect.height) : (g_height - 1);
 
 			circle(frame, pt, 5, CV_RGB(255, 0, 0), CV_FILLED);
+			char text[15] = { 0 };
+			sprintf(text, "(%d,%d)", (int)(distanceMap.at<Vec3b>(pt.y, pt.x)[0]), (int)(distanceMap.at<Vec3b>(pt.y, pt.x)[1]));
+			putText(frame, text, pt, FONT_HERSHEY_SIMPLEX, 2, CV_RGB(0, 255, 0));
 			// ---------------------- 查询距离 --------------------- //
 			//cout << "distance = " << distanceMap.at<char>(pt.x, pt.y) << endl;
 		}
+
+		cv::Vec3i p(0, 0, 255);
+		frame.setTo(p, lineImg);
 		imshow("frame", frame);
+		writer << frame;
 	}
+	writer.release();
 	libvibeModel_Sequential_Free(model);
-	getchar();
+	return 0;
 }
 

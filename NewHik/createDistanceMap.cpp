@@ -16,14 +16,16 @@ int scale = 1;   // 当初显示器尺寸不够，导致引入此缩放参数:(
 cv::Mat g_lineImg = Mat(cv::Size(g_width, g_height), CV_8UC1, CV_RGB(0, 0, 0));
 cv::Mat g_distanceImg = Mat(cv::Size(g_width, g_height), CV_8UC1, CV_RGB(0, 0, 0));
 
-
+VideoCapture cap("person.mp4");
 void on_mouse(int Event, int x, int y, int flags, void *userdata)
 {
-	
+	/*
 	bool ret = decodeImg(g_color);
 	if (!ret) return;
 	imshow("pic", g_color);
-
+	/**/
+	cap >> g_color;
+	cout << g_color.cols << g_color.rows << endl;
 	cv::Vec3i p(0, 0, 255);
 	g_color.setTo(p, g_lineImg);
 	imshow("pic", g_color);
@@ -284,8 +286,8 @@ void createDistanceMap(int x_dis[],int y_dis[],int n_area)
 		auto vec = g_vecRect[i];
 		int num = (int)vec.size();
 		const Point *pt = &(vec[0]);
-
-		cv::Scalar color = CV_RGB(x_dis[i], y_dis[i], 0);
+	
+		cv::Scalar color = cv::Scalar(x_dis[i], y_dis[i], 0);
 		fillPoly(distanceMapImg, &pt, &num, 1, color);
 	}
 	imwrite("distanceMapImg.bmp", distanceMapImg);
